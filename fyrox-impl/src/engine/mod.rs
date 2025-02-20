@@ -183,7 +183,7 @@ impl Display for PerformanceStatistics {
 /// An initialized graphics context. It contains the main application window and the renderer instance.
 pub struct InitializedGraphicsContext {
     /// Main application window.
-    pub window: Window,
+    pub window: Rc<Window>,
 
     /// Current renderer.
     pub renderer: Renderer,
@@ -1037,7 +1037,7 @@ impl ResourceDependencyGraph {
 }
 
 /// A result returned by a graphics server constructor.
-pub type GraphicsServerConstructorResult = Result<(Window, SharedGraphicsServer), FrameworkError>;
+pub type GraphicsServerConstructorResult = Result<(Rc<Window>, SharedGraphicsServer), FrameworkError>;
 
 /// Graphics server constructor callback responsible for actual server creation. Graphics server
 /// initialization usually tied together with window creation on some operating systems, that's why

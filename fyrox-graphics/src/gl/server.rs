@@ -57,7 +57,7 @@ use glutin::{
 use glutin_winit::{DisplayBuilder, GlWindow};
 #[cfg(not(target_arch = "wasm32"))]
 use raw_window_handle::HasRawWindowHandle;
-use std::cell::RefCell;
+use std::cell::{OnceCell, RefCell};
 use std::ops::DerefMut;
 use std::rc::{Rc, Weak};
 #[cfg(not(target_arch = "wasm32"))]
@@ -263,7 +263,7 @@ impl InnerState {
 pub struct GlGraphicsServer {
     pub gl: glow::Context,
     pub(crate) state: RefCell<InnerState>,
-    this: RefCell<Option<Weak<GlGraphicsServer>>>,
+    this: OnceCell<Weak<GlGraphicsServer>>,
 }
 
 #[derive(Copy, Clone)]
@@ -316,7 +316,7 @@ impl GlGraphicsServer {
         #[allow(unused_variables)] msaa_sample_count: Option<u8>,
         window_target: &EventLoopWindowTarget<()>,
         window_builder: WindowBuilder,
-    ) -> Result<(Window, SharedGraphicsServer), FrameworkError> {
+    ) -> Result<(Rc<Window>, SharedGraphicsServer), FrameworkError> {
         #[cfg(not(target_arch = "wasm32"))]
         let (window, gl_context, gl_surface, mut context, gl_kind) = {
             let mut template = ConfigTemplateBuilder::new()
@@ -573,13 +573,13 @@ impl GlGraphicsServer {
 
         let shared = Rc::new(state);
 
-        *shared.this.borrow_mut() = Some(Rc::downgrade(&shared));
+        shared.this.set(Rc::downgrade(&shared)).unwrap();
 
-        Ok((window, shared))
+        Ok((window.into(), shared))
     }
 
     pub fn weak(&self) -> Weak<Self> {
-        self.this.borrow().as_ref().unwrap().clone()
+        self.this.get().unwrap().clone()
     }
 
     pub fn gl_kind(&self) -> GlKind {
@@ -1067,7 +1067,7 @@ impl GraphicsServer for GlGraphicsServer {
     }
 
     fn weak(self: Rc<Self>) -> Weak<dyn GraphicsServer> {
-        self.this.borrow().as_ref().unwrap().clone()
+        self.this.get().unwrap().clone()
     }
 
     fn flush(&self) {
