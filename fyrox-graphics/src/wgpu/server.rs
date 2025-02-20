@@ -63,7 +63,7 @@ impl WgpuGraphicsServer {
 
         let shared = Rc::new(state);
 
-        shared.this.set(Rc::downgrade(&shared));
+        shared.this.set(Rc::downgrade(&shared)).unwrap();
 
         Ok((window, shared))
     }
