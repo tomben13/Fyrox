@@ -11,9 +11,7 @@ use winit::{
 };
 
 use crate::{
-    buffer::{BufferKind, BufferUsage, GpuBuffer},
-    error::FrameworkError,
-    server::{GraphicsServer, SharedGraphicsServer},
+    buffer::{BufferKind, BufferUsage, GpuBuffer}, error::FrameworkError, framebuffer::{Attachment, GpuFrameBuffer}, geometry_buffer::{GeometryBufferDescriptor, GpuGeometryBuffer}, gpu_program::{GpuProgram, ShaderResourceDefinition}, gpu_texture::{GpuTexture, GpuTextureDescriptor}, query::GpuQuery, read_buffer::GpuAsyncReadBuffer, server::{GraphicsServer, ServerCapabilities, SharedGraphicsServer}, stats::PipelineStatistics, PolygonFace, PolygonFillMode
 };
 
 use super::buffer::WgpuBuffer;
@@ -90,24 +88,24 @@ impl GraphicsServer for WgpuGraphicsServer {
 
     fn create_texture(
         &self,
-        desc: crate::gpu_texture::GpuTextureDescriptor,
-    ) -> Result<crate::gpu_texture::GpuTexture, crate::error::FrameworkError> {
+        desc: GpuTextureDescriptor,
+    ) -> Result<GpuTexture, FrameworkError> {
         todo!()
     }
 
     fn create_frame_buffer(
         &self,
-        depth_attachment: Option<crate::framebuffer::Attachment>,
-        color_attachments: Vec<crate::framebuffer::Attachment>,
-    ) -> Result<crate::framebuffer::GpuFrameBuffer, crate::error::FrameworkError> {
+        depth_attachment: Option<Attachment>,
+        color_attachments: Vec<Attachment>,
+    ) -> Result<GpuFrameBuffer, FrameworkError> {
         todo!()
     }
 
-    fn back_buffer(&self) -> crate::framebuffer::GpuFrameBuffer {
+    fn back_buffer(&self) -> GpuFrameBuffer {
         todo!()
     }
 
-    fn create_query(&self) -> Result<crate::query::GpuQuery, crate::error::FrameworkError> {
+    fn create_query(&self) -> Result<GpuQuery, FrameworkError> {
         todo!()
     }
 
@@ -116,7 +114,7 @@ impl GraphicsServer for WgpuGraphicsServer {
         name: &str,
         vertex_source: &str,
         fragment_source: &str,
-    ) -> Result<crate::gpu_program::GpuProgram, crate::error::FrameworkError> {
+    ) -> Result<GpuProgram, FrameworkError> {
         todo!()
     }
 
@@ -125,8 +123,8 @@ impl GraphicsServer for WgpuGraphicsServer {
         name: &str,
         vertex_source: &str,
         fragment_source: &str,
-        properties: &[crate::gpu_program::ShaderResourceDefinition],
-    ) -> Result<crate::gpu_program::GpuProgram, crate::error::FrameworkError> {
+        properties: &[ShaderResourceDefinition],
+    ) -> Result<GpuProgram, FrameworkError> {
         todo!()
     }
 
@@ -134,19 +132,19 @@ impl GraphicsServer for WgpuGraphicsServer {
         &self,
         pixel_size: usize,
         pixel_count: usize,
-    ) -> Result<crate::read_buffer::GpuAsyncReadBuffer, crate::error::FrameworkError> {
+    ) -> Result<GpuAsyncReadBuffer, FrameworkError> {
         todo!()
     }
 
     fn create_geometry_buffer(
         &self,
-        desc: crate::geometry_buffer::GeometryBufferDescriptor,
-    ) -> Result<crate::geometry_buffer::GpuGeometryBuffer, crate::error::FrameworkError> {
+        desc: GeometryBufferDescriptor,
+    ) -> Result<GpuGeometryBuffer, FrameworkError> {
         todo!()
     }
 
-    fn weak(self: std::rc::Rc<Self>) -> std::rc::Weak<dyn GraphicsServer> {
-        todo!()
+    fn weak(self: Rc<Self>) -> Weak<dyn GraphicsServer> {
+        (*self).weak()
     }
 
     fn flush(&self) {
@@ -161,11 +159,11 @@ impl GraphicsServer for WgpuGraphicsServer {
         todo!()
     }
 
-    fn pipeline_statistics(&self) -> crate::stats::PipelineStatistics {
+    fn pipeline_statistics(&self) -> PipelineStatistics {
         todo!()
     }
 
-    fn swap_buffers(&self) -> Result<(), crate::error::FrameworkError> {
+    fn swap_buffers(&self) -> Result<(), FrameworkError> {
         todo!()
     }
 
@@ -173,14 +171,14 @@ impl GraphicsServer for WgpuGraphicsServer {
         todo!()
     }
 
-    fn capabilities(&self) -> crate::server::ServerCapabilities {
+    fn capabilities(&self) -> ServerCapabilities {
         todo!()
     }
 
     fn set_polygon_fill_mode(
         &self,
-        polygon_face: crate::PolygonFace,
-        polygon_fill_mode: crate::PolygonFillMode,
+        polygon_face: PolygonFace,
+        polygon_fill_mode: PolygonFillMode,
     ) {
         todo!()
     }
