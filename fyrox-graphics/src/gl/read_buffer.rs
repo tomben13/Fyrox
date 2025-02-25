@@ -36,7 +36,7 @@ struct ReadRequest {
     fence: glow::Fence,
 }
 
-pub struct GlAsyncReadBuffer {
+pub(crate) struct GlAsyncReadBuffer {
     server: Weak<GlGraphicsServer>,
     buffer: GlBuffer,
     request: Cell<Option<ReadRequest>>,
@@ -45,7 +45,7 @@ pub struct GlAsyncReadBuffer {
 }
 
 impl GlAsyncReadBuffer {
-    pub fn new(
+    pub(crate) fn new(
         server: &GlGraphicsServer,
         pixel_size: usize,
         pixel_count: usize,

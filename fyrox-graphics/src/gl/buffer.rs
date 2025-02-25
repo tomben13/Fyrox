@@ -55,16 +55,16 @@ impl ToGlConstant for BufferUsage {
     }
 }
 
-pub struct GlBuffer {
-    pub state: Weak<GlGraphicsServer>,
-    pub id: glow::Buffer,
-    pub size: Cell<usize>,
-    pub kind: BufferKind,
-    pub usage: BufferUsage,
+pub(crate) struct GlBuffer {
+    pub(crate) state: Weak<GlGraphicsServer>,
+    pub(crate) id: glow::Buffer,
+    pub(crate) size: Cell<usize>,
+    pub(crate) kind: BufferKind,
+    pub(crate) usage: BufferUsage,
 }
 
 impl GlBuffer {
-    pub fn new(
+    pub(crate) fn new(
         server: &GlGraphicsServer,
         size_bytes: usize,
         kind: BufferKind,

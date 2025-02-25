@@ -42,19 +42,19 @@ impl AttributeKind {
     }
 }
 
-pub struct GlGeometryBuffer {
-    pub state: Weak<GlGraphicsServer>,
-    pub vertex_array_object: glow::VertexArray,
-    pub buffers: Vec<GlBuffer>,
-    pub element_buffer: GlBuffer,
-    pub element_count: Cell<usize>,
-    pub element_kind: ElementKind,
+pub(crate) struct GlGeometryBuffer {
+    pub(crate) state: Weak<GlGraphicsServer>,
+    pub(crate) vertex_array_object: glow::VertexArray,
+    pub(crate) buffers: Vec<GlBuffer>,
+    pub(crate) element_buffer: GlBuffer,
+    pub(crate) element_count: Cell<usize>,
+    pub(crate) element_kind: ElementKind,
     // Force compiler to not implement Send and Sync, because OpenGL is not thread-safe.
     thread_mark: PhantomData<*const u8>,
 }
 
 impl GlGeometryBuffer {
-    pub fn new(
+    pub(crate) fn new(
         server: &GlGraphicsServer,
         desc: GeometryBufferDescriptor,
     ) -> Result<Self, FrameworkError> {
@@ -136,7 +136,7 @@ impl GlGeometryBuffer {
         self.element_buffer.write_data(data).unwrap()
     }
 
-    pub fn mode(&self) -> u32 {
+    pub(crate) fn mode(&self) -> u32 {
         match self.element_kind {
             ElementKind::Triangle => glow::TRIANGLES,
             ElementKind::Line => glow::LINES,

@@ -31,7 +31,7 @@ use glow::HasContext;
 use std::{marker::PhantomData, rc::Weak};
 
 impl SamplerKind {
-    pub fn glsl_name(&self) -> &str {
+    pub(crate) fn glsl_name(&self) -> &str {
         match self {
             SamplerKind::Sampler1D => "sampler1D",
             SamplerKind::Sampler2D => "sampler2D",
@@ -112,15 +112,15 @@ fn prepare_source_code(code: &str, gl_kind: GlKind) -> String {
     }
 }
 
-pub struct GlProgram {
+pub(crate) struct GlProgram {
     state: Weak<GlGraphicsServer>,
-    pub id: glow::Program,
+    pub(crate) id: glow::Program,
     // Force compiler to not implement Send and Sync, because OpenGL is not thread-safe.
     thread_mark: PhantomData<*const u8>,
 }
 
 impl GlProgram {
-    pub fn from_source_and_resources(
+    pub(crate) fn from_source_and_resources(
         server: &GlGraphicsServer,
         program_name: &str,
         vertex_source: &str,

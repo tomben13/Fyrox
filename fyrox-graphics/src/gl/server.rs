@@ -1067,7 +1067,7 @@ impl GraphicsServer for GlGraphicsServer {
     }
 
     fn weak(self: Rc<Self>) -> Weak<dyn GraphicsServer> {
-        self.this.get().unwrap().clone()
+        (*self).weak()
     }
 
     fn flush(&self) {

@@ -38,7 +38,7 @@ use crate::{
 use glow::HasContext;
 use std::rc::Weak;
 
-pub struct GlFrameBuffer {
+pub(crate) struct GlFrameBuffer {
     state: Weak<GlGraphicsServer>,
     fbo: Option<glow::Framebuffer>,
     depth_attachment: Option<Attachment>,
@@ -87,7 +87,7 @@ unsafe fn set_attachment(server: &GlGraphicsServer, gl_attachment_kind: u32, tex
 }
 
 impl GlFrameBuffer {
-    pub fn new(
+    pub(crate) fn new(
         server: &GlGraphicsServer,
         depth_attachment: Option<Attachment>,
         color_attachments: Vec<Attachment>,
@@ -147,7 +147,7 @@ impl GlFrameBuffer {
         }
     }
 
-    pub fn backbuffer(server: &GlGraphicsServer) -> Self {
+    pub(crate) fn backbuffer(server: &GlGraphicsServer) -> Self {
         Self {
             state: server.weak(),
             fbo: None,
@@ -157,7 +157,7 @@ impl GlFrameBuffer {
     }
 
     /// None is possible only for back buffer.
-    pub fn id(&self) -> Option<glow::Framebuffer> {
+    pub(crate) fn id(&self) -> Option<glow::Framebuffer> {
         self.fbo
     }
 }

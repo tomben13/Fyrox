@@ -27,14 +27,14 @@ use glow::HasContext;
 use std::{cell::Cell, rc::Weak};
 
 #[derive(Debug)]
-pub struct GlQuery {
+pub(crate) struct GlQuery {
     id: glow::Query,
     pipeline_state: Weak<GlGraphicsServer>,
     active_query: Cell<Option<QueryKind>>,
 }
 
 impl GlQuery {
-    pub fn new(server: &GlGraphicsServer) -> Result<Self, FrameworkError> {
+    pub(crate) fn new(server: &GlGraphicsServer) -> Result<Self, FrameworkError> {
         let mut inner = server.state.borrow_mut();
         let id = if let Some(existing) = inner.queries.pop() {
             existing

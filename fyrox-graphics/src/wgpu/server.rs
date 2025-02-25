@@ -11,10 +11,20 @@ use winit::{
 };
 
 use crate::{
-    buffer::{BufferKind, BufferUsage, GpuBuffer}, error::FrameworkError, framebuffer::{Attachment, GpuFrameBuffer}, geometry_buffer::{GeometryBufferDescriptor, GpuGeometryBuffer}, gpu_program::{GpuProgram, ShaderResourceDefinition}, gpu_texture::{GpuTexture, GpuTextureDescriptor}, query::GpuQuery, read_buffer::GpuAsyncReadBuffer, server::{GraphicsServer, ServerCapabilities, SharedGraphicsServer}, stats::PipelineStatistics, PolygonFace, PolygonFillMode
+    buffer::{BufferKind, BufferUsage, GpuBuffer},
+    error::FrameworkError,
+    framebuffer::{Attachment, GpuFrameBuffer},
+    geometry_buffer::{GeometryBufferDescriptor, GpuGeometryBuffer},
+    gpu_program::{GpuProgram, ShaderResourceDefinition},
+    gpu_texture::{GpuTexture, GpuTextureDescriptor},
+    query::GpuQuery,
+    read_buffer::GpuAsyncReadBuffer,
+    server::{GraphicsServer, ServerCapabilities, SharedGraphicsServer},
+    stats::PipelineStatistics,
+    PolygonFace, PolygonFillMode,
 };
 
-use super::buffer::WgpuBuffer;
+use super::{buffer::WgpuBuffer, texture::WgpuTexture};
 
 pub struct WgpuGraphicsServer {
     surface: wgpu::Surface<'static>,
@@ -86,11 +96,8 @@ impl GraphicsServer for WgpuGraphicsServer {
         ))))
     }
 
-    fn create_texture(
-        &self,
-        desc: GpuTextureDescriptor,
-    ) -> Result<GpuTexture, FrameworkError> {
-        todo!()
+    fn create_texture(&self, desc: GpuTextureDescriptor) -> Result<GpuTexture, FrameworkError> {
+        Ok(GpuTexture(Rc::new(WgpuTexture::new(self, desc))))
     }
 
     fn create_frame_buffer(
@@ -175,11 +182,7 @@ impl GraphicsServer for WgpuGraphicsServer {
         todo!()
     }
 
-    fn set_polygon_fill_mode(
-        &self,
-        polygon_face: PolygonFace,
-        polygon_fill_mode: PolygonFillMode,
-    ) {
+    fn set_polygon_fill_mode(&self, polygon_face: PolygonFace, polygon_fill_mode: PolygonFillMode) {
         todo!()
     }
 }

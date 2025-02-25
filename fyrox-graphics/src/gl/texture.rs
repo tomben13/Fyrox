@@ -36,7 +36,7 @@ use std::{
 };
 
 impl GpuTextureKind {
-    pub fn gl_texture_target(&self) -> u32 {
+    pub(crate) fn gl_texture_target(&self) -> u32 {
         match self {
             Self::Line { .. } => glow::TEXTURE_1D,
             Self::Rectangle { .. } => glow::TEXTURE_2D,
@@ -103,7 +103,7 @@ impl ToGlConstant for CubeMapFace {
     }
 }
 
-pub struct GlTexture {
+pub(crate) struct GlTexture {
     state: Weak<GlGraphicsServer>,
     texture: glow::Texture,
     kind: Cell<GpuTextureKind>,
@@ -128,11 +128,11 @@ const GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: u32 = 0x83F1;
 const GL_COMPRESSED_RGBA_S3TC_DXT3_EXT: u32 = 0x83F2;
 const GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: u32 = 0x83F3;
 
-pub struct PixelDescriptor {
-    pub data_type: u32,
-    pub format: u32,
-    pub internal_format: u32,
-    pub swizzle_mask: Option<[i32; 4]>,
+pub(crate) struct PixelDescriptor {
+    pub(crate) data_type: u32,
+    pub(crate) format: u32,
+    pub(crate) internal_format: u32,
+    pub(crate) swizzle_mask: Option<[i32; 4]>,
 }
 
 impl PixelKind {
@@ -371,7 +371,7 @@ impl GlTexture {
     ///
     /// For compressed textures data must contain all mips, where each mip must be 2 times
     /// smaller than previous.
-    pub fn new(
+    pub(crate) fn new(
         server: &GlGraphicsServer,
         mut desc: GpuTextureDescriptor,
     ) -> Result<Self, FrameworkError> {
@@ -428,7 +428,7 @@ impl GlTexture {
         }
     }
 
-    pub fn bind(&self, server: &GlGraphicsServer, sampler_index: u32) {
+    pub(crate) fn bind(&self, server: &GlGraphicsServer, sampler_index: u32) {
         server.set_texture(
             sampler_index,
             self.kind.get().gl_texture_target(),
@@ -441,7 +441,7 @@ impl GlTexture {
         TempBinding::new(server, self)
     }
 
-    pub fn id(&self) -> glow::Texture {
+    pub(crate) fn id(&self) -> glow::Texture {
         self.texture
     }
 }
