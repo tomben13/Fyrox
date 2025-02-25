@@ -9,7 +9,7 @@ use super::server::WgpuGraphicsServer;
 
 pub struct WgpuBuffer {
     state: Weak<WgpuGraphicsServer>,
-    buffer: wgpu::Buffer,
+    pub(crate) buffer: wgpu::Buffer,
     size: usize,
     kind: BufferKind,
     usage: BufferUsage,

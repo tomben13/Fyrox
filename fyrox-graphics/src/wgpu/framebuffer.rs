@@ -7,13 +7,16 @@ use crate::{
     framebuffer::{
         Attachment, DrawCallStatistics, GpuFrameBuffer, GpuFrameBufferTrait, ResourceBindGroup,
     },
-    geometry_buffer::GpuGeometryBuffer,
+    geometry_buffer::{GpuGeometryBuffer, GpuGeometryBufferTrait},
     gpu_program::GpuProgram,
     gpu_texture::CubeMapFace,
     DrawParameters, ElementRange,
 };
 
-use super::{server::WgpuGraphicsServer, texture::WgpuTexture};
+use super::{
+    geometry_buffer::WgpuGeometryBuffer, program::WgpuProgram, server::WgpuGraphicsServer,
+    texture::WgpuTexture,
+};
 
 struct WgpuFrameBuffer {
     state: Weak<WgpuGraphicsServer>,
@@ -176,13 +179,45 @@ impl GpuFrameBufferTrait for WgpuFrameBuffer {
                     }),
                 });
 
-        let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
             color_attachments: &color_attachments,
             depth_stencil_attachment,
-            timestamp_writes: todo!(),
-            occlusion_query_set: todo!(),
+            timestamp_writes: None,
+            occlusion_query_set: None,
         });
+
+        let program = program.as_any().downcast_ref::<WgpuProgram>().unwrap();
+
+        //render_pass.set_pipeline(todo!());
+
+        for resource in resources {
+            server.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: None,
+                layout: todo!(),
+                entries: todo!(),
+            });
+        }
+        //render_pass.set_bind_group(todo!());
+
+        let geometry = geometry
+            .as_any()
+            .downcast_ref::<WgpuGeometryBuffer>()
+            .unwrap();
+
+        for (i, vertex_buffer) in geometry.vertex_buffers.iter().enumerate() {
+            render_pass.set_vertex_buffer(i as u32, vertex_buffer.buffer.slice(..));
+        }
+        render_pass.set_index_buffer(
+            geometry.index_buffer.buffer.slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+
+        let range = match element_range {
+            ElementRange::Full => 0..geometry.element_count() as u32,
+            ElementRange::Specific { offset, count } => offset as u32..offset as u32 + count as u32,
+        };
+        render_pass.draw_indexed(range, 0, 0..1);
     }
 
     fn draw_instances(

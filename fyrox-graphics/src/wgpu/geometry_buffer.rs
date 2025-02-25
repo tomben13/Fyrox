@@ -12,8 +12,8 @@ use super::{buffer::WgpuBuffer, server::WgpuGraphicsServer};
 
 pub(crate) struct WgpuGeometryBuffer {
     state: Weak<WgpuGraphicsServer>,
-    vertex_buffers: Vec<WgpuBuffer>,
-    index_buffer: WgpuBuffer,
+    pub(crate) vertex_buffers: Vec<WgpuBuffer>,
+    pub(crate) index_buffer: WgpuBuffer,
     element_count: Cell<usize>,
 }
 
