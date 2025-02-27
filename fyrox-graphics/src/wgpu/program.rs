@@ -10,7 +10,8 @@ use crate::{
 use super::server::WgpuGraphicsServer;
 
 pub(crate) struct WgpuProgram {
-    pipeline: wgpu::RenderPipeline,
+    pub(crate) shader: wgpu::ShaderModule,
+    pub(crate) layout: wgpu::PipelineLayout,
 }
 
 impl WgpuProgram {
@@ -21,11 +22,20 @@ impl WgpuProgram {
         fragment_source: &str,
         resources: &[ShaderResourceDefinition],
     ) -> Result<WgpuProgram, FrameworkError> {
+        let shader = server
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::ShaderSource::Wgsl(
+                    (vertex_source.to_owned() + fragment_source).into(),
+                ),
+            });
+
         let mut texture_entries = Vec::new();
         let mut property_group_entries = Vec::new();
         for resource in resources {
             match resource.kind {
-                ShaderResourceKind::Texture { kind, fallback } => {
+                ShaderResourceKind::Texture { .. } => {
                     let texture_entry = wgpu::BindGroupLayoutEntry {
                         binding: 2 * resource.binding as u32,
                         visibility: wgpu::ShaderStages::FRAGMENT,
@@ -91,31 +101,7 @@ impl WgpuProgram {
                 push_constant_ranges: &[],
             });
 
-        let pipeline = server
-            .device
-            .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: None,
-                layout: Some(&layout),
-                vertex: wgpu::VertexState {
-                    module: &shader_module,
-                    entry_point: None,
-                    compilation_options: Default::default(),
-                    buffers: todo!(),
-                },
-                fragment: Some(wgpu::FragmentState {
-                    module: &shader_module,
-                    entry_point: None,
-                    compilation_options: Default::default(),
-                    targets: todo!(),
-                }),
-                primitive: todo!(),
-                depth_stencil: todo!(),
-                multisample: todo!(),
-                multiview: todo!(),
-                cache: todo!(),
-            });
-
-        Ok(Self { pipeline })
+        Ok(Self { shader, layout })
     }
 }
 

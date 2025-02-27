@@ -20,6 +20,7 @@ use super::{
 
 struct WgpuFrameBuffer {
     state: Weak<WgpuGraphicsServer>,
+    // pipeline: wgpu::RenderPipeline,
     color_attachments: Vec<Attachment>,
     depth_attachment: Option<Attachment>,
     clear_color: Cell<Option<Color>>,
@@ -32,9 +33,11 @@ impl WgpuFrameBuffer {
         server: &WgpuGraphicsServer,
         depth_attachment: Option<Attachment>,
         color_attachments: Vec<Attachment>,
+        program: &WgpuProgram,
     ) -> Self {
         Self {
             state: server.weak(),
+            pipeline,
             color_attachments,
             depth_attachment,
             clear_color: None.into(),
@@ -97,6 +100,75 @@ impl GpuFrameBufferTrait for WgpuFrameBuffer {
         element_range: ElementRange,
     ) -> Result<DrawCallStatistics, FrameworkError> {
         let server = self.state.upgrade().unwrap();
+
+        let color_targets: Vec<Option<wgpu::ColorTargetState>> = self
+            .color_attachments
+            .iter()
+            .map(|color_attachment| {
+                let texture = color_attachment
+                    .texture
+                    .as_any()
+                    .downcast_ref::<WgpuTexture>()
+                    .unwrap();
+
+                Some(wgpu::ColorTargetState {
+                    format: texture.texture.borrow().format(),
+                    blend: Default::default(),
+                    write_mask: Default::default(),
+                })
+            })
+            .collect();
+
+        let program = program.as_any().downcast_ref::<WgpuProgram>().unwrap();
+
+        let pipeline = server
+            .device
+            .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: None,
+                layout: Some(&program.layout),
+                vertex: wgpu::VertexState {
+                    module: &program.shader,
+                    entry_point: None,
+                    compilation_options: Default::default(),
+                    buffers: todo!(),
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &program.shader,
+                    entry_point: None,
+                    compilation_options: Default::default(),
+                    targets: &color_targets,
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: todo!(),
+                    strip_index_format: todo!(),
+                    front_face: todo!(),
+                    cull_mode: todo!(),
+                    unclipped_depth: todo!(),
+                    polygon_mode: todo!(),
+                    conservative: todo!(),
+                },
+                depth_stencil: self.depth_attachment.map(|depth_attachment| {
+                    let format = depth_attachment
+                        .texture
+                        .as_any()
+                        .downcast_ref::<WgpuTexture>()
+                        .unwrap()
+                        .texture
+                        .borrow()
+                        .format();
+
+                    wgpu::DepthStencilState {
+                        format,
+                        depth_write_enabled: todo!(),
+                        depth_compare: todo!(),
+                        stencil: Default::default(),
+                        bias: Default::default(),
+                    }
+                }),
+                multisample: Default::default(),
+                multiview: Default::default(),
+                cache: Default::default(),
+            });
 
         let mut encoder = server
             .device
