@@ -15,6 +15,7 @@ pub(crate) struct WgpuGeometryBuffer {
     pub(crate) vertex_buffers: Vec<WgpuBuffer>,
     pub(crate) index_buffer: WgpuBuffer,
     element_count: Cell<usize>,
+    pub(crate) desc: GeometryBufferDescriptor,
 }
 
 impl WgpuGeometryBuffer {
@@ -52,6 +53,7 @@ impl WgpuGeometryBuffer {
             vertex_buffers,
             index_buffer,
             element_count: element_count.into(),
+            desc,
         })
     }
 }

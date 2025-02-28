@@ -3,14 +3,9 @@ use std::{cell::Cell, rc::Weak};
 use fyrox_core::{color::Color, math::Rect};
 
 use crate::{
-    error::FrameworkError,
-    framebuffer::{
+    error::FrameworkError, framebuffer::{
         Attachment, DrawCallStatistics, GpuFrameBuffer, GpuFrameBufferTrait, ResourceBindGroup,
-    },
-    geometry_buffer::{GpuGeometryBuffer, GpuGeometryBufferTrait},
-    gpu_program::GpuProgram,
-    gpu_texture::CubeMapFace,
-    DrawParameters, ElementRange,
+    }, geometry_buffer::{AttributeKind, ElementsDescriptor, GpuGeometryBuffer, GpuGeometryBufferTrait}, gpu_program::GpuProgram, gpu_texture::CubeMapFace, CullFace, DrawParameters, ElementRange
 };
 
 use super::{
@@ -33,11 +28,9 @@ impl WgpuFrameBuffer {
         server: &WgpuGraphicsServer,
         depth_attachment: Option<Attachment>,
         color_attachments: Vec<Attachment>,
-        program: &WgpuProgram,
     ) -> Self {
         Self {
             state: server.weak(),
-            pipeline,
             color_attachments,
             depth_attachment,
             clear_color: None.into(),
@@ -119,7 +112,49 @@ impl GpuFrameBufferTrait for WgpuFrameBuffer {
             })
             .collect();
 
+        let geometry = geometry
+            .as_any()
+            .downcast_ref::<WgpuGeometryBuffer>()
+            .unwrap();
         let program = program.as_any().downcast_ref::<WgpuProgram>().unwrap();
+
+        let buffers: Vec<wgpu::VertexBufferLayout> = geometry
+            .desc
+            .buffers
+            .into_iter()
+            .map(|buffer_desc| {
+                let attributes: Vec<wgpu::VertexAttribute> = buffer_desc
+                    .attributes
+                    .into_iter()
+                    .map(|attribute| wgpu::VertexAttribute {
+                        format: match (attribute.kind, attribute.component_count) {
+                            (AttributeKind::Float, 1) => wgpu::VertexFormat::Float32,
+                            (AttributeKind::Float, 2) => wgpu::VertexFormat::Float32x2,
+                            (AttributeKind::Float, 3) => wgpu::VertexFormat::Float32x3,
+                            (AttributeKind::Float, 4) => wgpu::VertexFormat::Float32x4,
+                            (AttributeKind::UnsignedByte, 1) => wgpu::VertexFormat::Uint8,
+                            (AttributeKind::UnsignedByte, 2) => wgpu::VertexFormat::Uint8x2,
+                            (AttributeKind::UnsignedByte, 4) => wgpu::VertexFormat::Uint8x4,
+                            (AttributeKind::UnsignedShort, 1) => wgpu::VertexFormat::Uint16,
+                            (AttributeKind::UnsignedShort, 2) => wgpu::VertexFormat::Uint16x2,
+                            (AttributeKind::UnsignedShort, 4) => wgpu::VertexFormat::Uint16x4,
+                            (AttributeKind::UnsignedInt, 1) => wgpu::VertexFormat::Uint32,
+                            (AttributeKind::UnsignedInt, 2) => wgpu::VertexFormat::Uint32x2,
+                            (AttributeKind::UnsignedInt, 3) => wgpu::VertexFormat::Uint32x3,
+                            (AttributeKind::UnsignedInt, 4) => wgpu::VertexFormat::Uint32x4,
+                        },
+                        offset: 0,
+                        shader_location: attribute.location,
+                    })
+                    .collect();
+
+                wgpu::VertexBufferLayout {
+                    array_stride: buffer_desc.data.element_size as u64,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &attributes,
+                }
+            })
+            .collect();
 
         let pipeline = server
             .device
@@ -130,7 +165,7 @@ impl GpuFrameBufferTrait for WgpuFrameBuffer {
                     module: &program.shader,
                     entry_point: None,
                     compilation_options: Default::default(),
-                    buffers: todo!(),
+                    buffers: &buffers,
                 },
                 fragment: Some(wgpu::FragmentState {
                     module: &program.shader,
@@ -139,13 +174,22 @@ impl GpuFrameBufferTrait for WgpuFrameBuffer {
                     targets: &color_targets,
                 }),
                 primitive: wgpu::PrimitiveState {
-                    topology: todo!(),
-                    strip_index_format: todo!(),
-                    front_face: todo!(),
-                    cull_mode: todo!(),
-                    unclipped_depth: todo!(),
-                    polygon_mode: todo!(),
-                    conservative: todo!(),
+                    topology: match geometry.desc.elements {
+                        ElementsDescriptor::Triangles(_) => wgpu::PrimitiveTopology::TriangleList,
+                        ElementsDescriptor::Lines(_) => wgpu::PrimitiveTopology::LineList,
+                        ElementsDescriptor::Points(_) => wgpu::PrimitiveTopology::PointList,
+                    },
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: params.cull_face.map(|cull_face| {
+                        match cull_face {
+                            CullFace::Back => wgpu::Face::Back,
+                            CullFace::Front => wgpu::Face::Front,
+                        }
+                    }),
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    unclipped_depth: false,
+                    conservative: false,
                 },
                 depth_stencil: self.depth_attachment.map(|depth_attachment| {
                     let format = depth_attachment
@@ -159,8 +203,8 @@ impl GpuFrameBufferTrait for WgpuFrameBuffer {
 
                     wgpu::DepthStencilState {
                         format,
-                        depth_write_enabled: todo!(),
-                        depth_compare: todo!(),
+                        depth_write_enabled: true,
+                        depth_compare: wgpu::CompareFunction::LessEqual,
                         stencil: Default::default(),
                         bias: Default::default(),
                     }
@@ -259,23 +303,17 @@ impl GpuFrameBufferTrait for WgpuFrameBuffer {
             occlusion_query_set: None,
         });
 
-        let program = program.as_any().downcast_ref::<WgpuProgram>().unwrap();
+        render_pass.set_pipeline(&pipeline);
 
-        //render_pass.set_pipeline(todo!());
-
-        for resource in resources {
-            server.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        for (i, resource) in resources.into_iter().enumerate() {
+            let bind_group = server.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: None,
                 layout: todo!(),
                 entries: todo!(),
             });
-        }
-        //render_pass.set_bind_group(todo!());
 
-        let geometry = geometry
-            .as_any()
-            .downcast_ref::<WgpuGeometryBuffer>()
-            .unwrap();
+            render_pass.set_bind_group(i as u32, &bind_group, &[]);
+        }
 
         for (i, vertex_buffer) in geometry.vertex_buffers.iter().enumerate() {
             render_pass.set_vertex_buffer(i as u32, vertex_buffer.buffer.slice(..));
